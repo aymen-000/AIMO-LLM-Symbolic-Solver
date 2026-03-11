@@ -1,0 +1,35 @@
+# GRPO hyperparameters for 1x H100 (80GB)
+
+model:
+  policy_path: "./outputs/sft_merged"       # merged SFT checkpoint
+  ref_path: "./outputs/sft_merged"          # frozen reference (loaded in 8-bit)
+  dtype: "bfloat16"
+  ref_load_in_8bit: true                    # saves ~8GB VRAM for reference model
+
+grpo:
+  group_size: 8                             # G responses sampled per problem
+  max_new_tokens: 1024
+  temperature: 0.8
+  top_p: 0.95
+  kl_coeff: 0.02                            # beta — KL penalty weight
+  clip_range: 0.2                           # PPO-style ratio clipping
+  normalize_advantages: true
+
+training:
+  output_dir: "./outputs/grpo"
+  max_steps: 1500
+  per_device_train_batch_size: 1            # 1 problem × G rollouts per step
+  gradient_accumulation_steps: 4
+  learning_rate: 1.0e-6
+  lr_scheduler_type: "constant_with_warmup"
+  warmup_steps: 50
+  max_grad_norm: 1.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 5
+  save_steps: 100
+  save_total_limit: 5
+  report_to: "wandb"
+
+data:
+  train_path: "./data/processed/grpo_hard.jsonl"

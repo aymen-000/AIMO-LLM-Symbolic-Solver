@@ -1,0 +1,47 @@
+# SFT hyperparameters for Qwen2.5-Math-7B on 1x H100 (80GB)
+
+model:
+  name: "Qwen/Qwen2.5-Math-7B-Instruct"
+  dtype: "bfloat16"
+  max_seq_length: 2048
+
+lora:
+  enabled: true
+  r: 64
+  lora_alpha: 128
+  lora_dropout: 0.05
+  target_modules:
+    - q_proj
+    - k_proj
+    - v_proj
+    - o_proj
+    - gate_proj
+    - up_proj
+    - down_proj
+
+training:
+  output_dir: "./outputs/sft"
+  num_train_epochs: 2
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 8       
+  learning_rate: 2.0e-5
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 200
+  eval_steps: 200
+  save_total_limit: 3
+  dataloader_num_workers: 4
+  report_to: "wandb"
+
+data:
+  train_path: "./data/processed/sft_train.jsonl"
+  eval_path: "./data/processed/sft_eval.jsonl"
+  max_samples: 300000

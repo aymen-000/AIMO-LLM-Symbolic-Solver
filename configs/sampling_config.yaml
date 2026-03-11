@@ -1,0 +1,23 @@
+# Self-consistency sampling configuration
+
+model:
+  path: "./outputs/grpo/final"        # use GRPO checkpoint 
+
+sampler:
+  n_samples: 32                       # N paths per problem
+  temperature: 0.7                    # diversity vs quality tradeoff
+  top_p: 0.95
+  max_new_tokens: 2048
+  gpu_memory_utilization: 0.90        # vLLM VRAM fraction
+
+voting:
+  strategy: "majority"                # majority | weighted | best_of_n
+  # weighted voter
+  length_penalty: 1.0e-5
+  # best_of_n voter
+  aggregate_method: "sum"             # max | mean | sum
+
+pipeline:
+  batch_size: 8                       # problems per vLLM batch
+  input_path:  "./data/problems.jsonl"
+  output_path: "./outputs/predictions.jsonl"

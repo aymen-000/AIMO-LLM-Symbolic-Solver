@@ -82,6 +82,10 @@ def load_model_and_tokenizer(cfg: dict):
         )
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
+        
+    # required for older PEFT + gradient checkpointing
+    if cfg["training"]["gradient_checkpointing"]:
+        model.enable_input_require_grads()
 
     return model, tokenizer
 
@@ -126,6 +130,7 @@ def main():
         max_grad_norm=train_cfg["max_grad_norm"],
         bf16=train_cfg["bf16"],
         gradient_checkpointing=train_cfg["gradient_checkpointing"],
+        gradient_checkpointing_kwargs={"use_reentrant": False},
         logging_steps=train_cfg["logging_steps"],
         save_steps=train_cfg["save_steps"],
         eval_steps=train_cfg["eval_steps"],

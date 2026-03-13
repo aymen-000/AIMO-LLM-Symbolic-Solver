@@ -48,7 +48,7 @@ def download_numina_tir():
 def download_math():
     """Hendrycks MATH dataset — 12.5K problems, levels 1–5."""
     print("Downloading MATH dataset...")
-    ds = load_dataset("lighteval/MATH", "all", split="train")
+    ds = load_dataset("xDAN2099/lighteval-MATH", split="train")
     records = []
     for row in tqdm(ds):
         records.append({    

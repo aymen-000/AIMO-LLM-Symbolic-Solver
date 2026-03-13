@@ -158,12 +158,12 @@ def main():
         save_steps=train_cfg["save_steps"],
         save_total_limit=train_cfg["save_total_limit"],
         report_to=train_cfg["report_to"],
-        # GRPO-specific
-        num_generations=grpo_cfg["group_size"],           # G
-        max_new_tokens=grpo_cfg["max_new_tokens"],
+        # ── GRPO-specific (trl==0.8.6 names) ──────────────────────────
+        num_generations=grpo_cfg["group_size"],       # G — same name, ok
+        max_completion_length=grpo_cfg["max_new_tokens"],  
         temperature=grpo_cfg["temperature"],
         top_p=grpo_cfg["top_p"],
-        kl_coeff=grpo_cfg["kl_coeff"],
+        beta=grpo_cfg["kl_coeff"],                    
         cliprange=grpo_cfg["clip_range"],
     )
 
@@ -173,7 +173,7 @@ def main():
         tokenizer=tokenizer,
         args=grpo_training_args,
         train_dataset=dataset,
-        reward_funcs=make_reward_fn(),
+        reward_funcs=[make_reward_fn()], 
     )
 
     print("\nStarting GRPO training...")

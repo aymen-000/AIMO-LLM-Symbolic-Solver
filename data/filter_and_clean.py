@@ -2,20 +2,18 @@
 Filters and cleans raw datasets for SFT training.
 
 Rules:
-  - Drop samples with fewer than 3 reasoning steps
-  - Drop samples missing a final answer
-  - Drop samples where SymPy can verify the answer is wrong
   - Deduplicate by problem text hash
   - Format into chat template for Qwen2.5-Math-7B-Instruct
+  - Extract answer from \\boxed{} if no explicit answer field
   - 95/5 train/eval split
 """
 
-import json 
+import json
 import hashlib
 import os
 import re
+import random
 from tqdm import tqdm
-from utils.answer_utils import normalize_answer, sympy_verify
 
 RAW_DIR = "./data/raw"
 OUT_DIR = "./data/processed"
@@ -28,60 +26,57 @@ SYSTEM_PROMPT = (
 )
 
 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def extract_boxed(text: str) -> str:
+    """Extract the last \\boxed{...} value from a solution string."""
+    matches = re.findall(r'\\boxed\{([^}]+)\}', text)
+    return matches[-1].strip() if matches else ""
+
+
+def get_field(rec: dict, *candidates) -> str:
+    """Try multiple field name candidates, return first non-empty match."""
+    for key in candidates:
+        if key in rec and rec[key]:
+            return str(rec[key]).strip()
+    return ""
+
+
 # ── Formatting ────────────────────────────────────────────────────────────────
 
 def format_chat(problem: str, solution: str, answer: str) -> dict:
     """Format a sample into Qwen2.5 chat template."""
     assistant_content = solution.strip()
-    if answer and not assistant_content.endswith(answer):
-        assistant_content += f"\n\nAnswer: {answer}"
+
+    # Only append Answer: line if not already present
+    if answer and f"\\boxed{{{answer}}}" not in assistant_content:
+        if "Answer:" not in assistant_content:
+            assistant_content += f"\n\nAnswer: {answer}"
 
     return {
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": problem.strip()},
+            {"role": "system",    "content": SYSTEM_PROMPT},
+            {"role": "user",      "content": problem.strip()},
             {"role": "assistant", "content": assistant_content},
         ]
     }
 
 
-# ── Filters ───────────────────────────────────────────────────────────────────
-
-def has_enough_steps(solution: str, min_steps: int = 3) -> bool:
-    """Check solution has at least min_steps reasoning steps."""
-    # Count sentence-like reasoning units
-    steps = re.split(r'\n+|(?<=[.!?])\s+', solution.strip())
-    steps = [s for s in steps if len(s.strip()) > 10]
-    return len(steps) >= min_steps
-
-
-def has_valid_answer(answer: str) -> bool:
-    """Answer must be non-empty and parseable."""
-    if not answer or not answer.strip():
-        return False
-    norm = normalize_answer(answer)
-    return norm is not None
-
-
-def sympy_check_passes(problem: str, solution: str, answer: str) -> bool:
-    """
-    Optional: try to verify numeric answers with SymPy.
-    Returns True if verification passes OR is inconclusive.
-    Only returns False if verification actively detects a wrong answer.
-    """
-    try:
-        result = sympy_verify(solution, answer)
-        return result is not False  # None = inconclusive = keep
-    except Exception:
-        return True  # if verification errors, keep the sample
-
-
-# ── Main pipeline ─────────────────────────────────────────────────────────────
+# ── I/O ───────────────────────────────────────────────────────────────────────
 
 def load_jsonl(path: str) -> list[dict]:
     with open(path) as f:
         return [json.loads(line) for line in f if line.strip()]
 
+
+def save_jsonl(records: list[dict], path: str):
+    with open(path, "w") as f:
+        for rec in records:
+            f.write(json.dumps(rec) + "\n")
+    print(f"  Saved {len(records):,} → {path}")
+
+
+# ── Dedup ─────────────────────────────────────────────────────────────────────
 
 def deduplicate(records: list[dict]) -> list[dict]:
     seen = set()
@@ -94,29 +89,35 @@ def deduplicate(records: list[dict]) -> list[dict]:
     return out
 
 
-def filter_records(records: list[dict], source: str) -> list[dict]:
-    kept, dropped = [], 0
-    for rec in tqdm(records, desc=f"Filtering {source}"):
-        if not has_valid_answer(rec.get("answer", "")):
-            dropped += 1
+# ── Processing ────────────────────────────────────────────────────────────────
+
+def process_records(records: list[dict], source: str) -> list[dict]:
+    """Normalize field names — no filtering, just format everything."""
+    out = []
+    for rec in tqdm(records, desc=f"Processing {source}"):
+        problem  = get_field(rec, "problem", "question", "input", "prompt")
+        solution = get_field(rec, "solution", "reasoning", "chain_of_thought",
+                             "rationale", "response", "output", "text")
+
+        # Try explicit answer field first, fall back to extracting from solution
+        answer = get_field(rec, "answer", "final_answer", "label", "target")
+        if not answer:
+            answer = extract_boxed(solution)
+
+        # Only skip if there's literally no question
+        if not problem:
             continue
-        if not has_enough_steps(rec.get("solution", "")):
-            dropped += 1
-            continue
-        if not sympy_check_passes(rec["problem"], rec["solution"], rec["answer"]):
-            dropped += 1
-            continue
-        kept.append(rec)
-    print(f"  {source}: kept {len(kept):,}, dropped {dropped:,}")
-    return kept
+
+        rec["problem"]  = problem
+        rec["solution"] = solution
+        rec["answer"]   = answer
+        out.append(rec)
+
+    print(f"  {source}: {len(out):,} records")
+    return out
 
 
-def save_jsonl(records: list[dict], path: str):
-    with open(path, "w") as f:
-        for rec in records:
-            f.write(json.dumps(rec) + "\n")
-    print(f"  Saved {len(records):,} → {path}")
-
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     all_records = []
@@ -127,9 +128,8 @@ if __name__ == "__main__":
             print(f"Skipping {fname} (not found)")
             continue
         raw = load_jsonl(path)
-        print(f"\nLoaded {len(raw):,} from {fname}")
-        filtered = filter_records(raw, fname)
-        all_records.extend(filtered)
+        print(f"Loaded {len(raw):,} from {fname}")
+        all_records.extend(process_records(raw, fname))
 
     print(f"\nTotal before dedup: {len(all_records):,}")
     all_records = deduplicate(all_records)
@@ -137,7 +137,6 @@ if __name__ == "__main__":
 
     # Cap at 300K for single-GPU training
     if len(all_records) > 300_000:
-        import random
         random.shuffle(all_records)
         all_records = all_records[:300_000]
         print(f"Capped at 300,000 samples")

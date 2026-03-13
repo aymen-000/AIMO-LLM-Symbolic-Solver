@@ -59,7 +59,7 @@ def load_model_and_tokenizer(cfg: dict):
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = "right"
+    tokenizer.padding_side = "left"
 
     with VRAMGuard("loading base model"):
         model = AutoModelForCausalLM.from_pretrained(

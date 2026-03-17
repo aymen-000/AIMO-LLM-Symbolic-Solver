@@ -40,6 +40,7 @@ training:
   save_total_limit: 3
   dataloader_num_workers: 4
   report_to: "wandb"
+  logging_steps : 500 
 
 data:
   train_path: "./data/processed/sft_train.jsonl"

@@ -131,15 +131,15 @@ def main():
         bf16=train_cfg["bf16"],
         gradient_checkpointing=train_cfg["gradient_checkpointing"],
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        # ⬇️ REDUCED LOGGING FREQUENCY ⬇️
-        logging_steps=train_cfg["logging_steps"],        
-        save_steps=train_cfg["save_steps"],
+        save_strategy=train_cfg["save_strategy"],
         eval_steps=train_cfg["eval_steps"],
-        evaluation_strategy="steps",
+        logging_strategy=train_cfg["logging_strategy"],
         save_total_limit=train_cfg["save_total_limit"],
         dataloader_num_workers=train_cfg["dataloader_num_workers"],
         report_to=train_cfg["report_to"],
+        evaluation_strategy=train_cfg["evaluation_strategy"],
         load_best_model_at_end=True,
+        eval_steps=train_cfg["eval_steps"],
         metric_for_best_model="eval_loss",
     )
 

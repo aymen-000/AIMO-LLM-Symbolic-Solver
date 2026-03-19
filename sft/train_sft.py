@@ -67,7 +67,7 @@ def load_model_and_tokenizer(cfg: dict):
             torch_dtype=dtype,
             device_map="auto",
             trust_remote_code=True,
-            attn_implementation="flash_attention_2",  # requires flash-attn
+            attn_implementation="flash_attention_2",  
         )
 
     if cfg["lora"]["enabled"]:
@@ -139,7 +139,6 @@ def main():
         report_to=train_cfg["report_to"],
         evaluation_strategy=train_cfg["evaluation_strategy"],
         load_best_model_at_end=True,
-        eval_steps=train_cfg["eval_steps"],
         metric_for_best_model="eval_loss",
     )
 

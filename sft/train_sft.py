@@ -131,13 +131,18 @@ def main():
         bf16=train_cfg["bf16"],
         gradient_checkpointing=train_cfg["gradient_checkpointing"],
         gradient_checkpointing_kwargs={"use_reentrant": False},
-        save_strategy=train_cfg["save_strategy"],
-        eval_steps=train_cfg["eval_steps"],
+        
+        # FIXED: Epoch-based evaluation and saving
+        evaluation_strategy="epoch",  # Evaluate every epoch
+        save_strategy="epoch",  # Save every epoch
+        # Remove eval_steps and save_steps
+        
         logging_strategy=train_cfg["logging_strategy"],
+        logging_steps=train_cfg.get("logging_steps", 10),
         save_total_limit=train_cfg["save_total_limit"],
         dataloader_num_workers=train_cfg["dataloader_num_workers"],
         report_to=train_cfg["report_to"],
-        evaluation_strategy=train_cfg["evaluation_strategy"],
+        
         load_best_model_at_end=True,
         metric_for_best_model="eval_loss",
     )

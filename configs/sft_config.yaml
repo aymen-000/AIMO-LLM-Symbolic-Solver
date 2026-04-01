@@ -1,7 +1,7 @@
 # SFT hyperparameters for Qwen2.5-Math-7B on 1x H100 (80GB)
 
 model:
-  name: "Qwen/Qwen2.5-Math-7B-Instruct"
+  name: "Qwen/Qwen3-4B-Thinking-2507"
   dtype: "bfloat16"
   max_seq_length: 2048
 
@@ -22,7 +22,7 @@ lora:
 training:
   output_dir: "./outputs/sft"
   num_train_epochs: 2
-  per_device_train_batch_size: 4
+  per_device_train_batch_size: 32
   gradient_accumulation_steps: 8       
   learning_rate: 2.0e-5
   lr_scheduler_type: "cosine"

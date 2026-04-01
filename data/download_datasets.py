@@ -40,7 +40,7 @@ def download_numina_tir():
         records.append({
             "source": "numina_tir",
             "problem": row["problem"],
-            "solution": row["solution"],   # already has code blocks
+            "solution": row["solution"],   
             "answer": row.get("answer", ""),
         })
     save_jsonl(records, f"{RAW_DIR}/numina_tir.jsonl")

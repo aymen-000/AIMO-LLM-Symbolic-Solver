@@ -1,5 +1,5 @@
 """
-SFT fine-tuning for Qwen2.5-Math-7B-Instruct using LoRA.
+SFT fine-tuning for Qwen2.5 using LoRA.
 Uses HuggingFace TRL's SFTTrainer.
 
 """
@@ -108,7 +108,7 @@ def main():
         cfg["data"]["eval_path"], tokenizer, cfg["model"]["max_seq_length"]
     )
 
-    # Only compute loss on assistant tokens
+   
     response_template = "<|im_start|>assistant\n"
     collator = DataCollatorForCompletionOnlyLM(
         response_template=response_template,
@@ -132,10 +132,10 @@ def main():
         gradient_checkpointing=train_cfg["gradient_checkpointing"],
         gradient_checkpointing_kwargs={"use_reentrant": False},
         
-        # FIXED: Epoch-based evaluation and saving
-        evaluation_strategy="epoch",  # Evaluate every epoch
-        save_strategy="epoch",  # Save every epoch
-        # Remove eval_steps and save_steps
+ 
+        evaluation_strategy="epoch", 
+        save_strategy="epoch",  
+
         
         logging_strategy=train_cfg["logging_strategy"],
         logging_steps=train_cfg.get("logging_steps", 10),

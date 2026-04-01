@@ -23,15 +23,18 @@ OUT_DIR    = "./data/processed"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 N_SAMPLES      = 8    
-MIN_SOLVE_RATE = 0.20    # drop if model solves < 20% → too hard
-MAX_SOLVE_RATE = 0.80    # drop if model solves > 80% → too easy
+MIN_SOLVE_RATE = 0.20    
+MAX_SOLVE_RATE = 0.80   
 MAX_NEW_TOKENS = 1024
 TEMPERATURE    = 0.8
 
 SYSTEM_PROMPT = (
     "You are an expert math olympiad solver. "
     "Think step by step. "
-    "At the end, state your final answer as a single integer on a new line prefixed with 'Answer:'."
+    "Always express your solution as executable Python code. "
+    "The code should compute the final answer directly. "
+    "Do not include explanations outside the code. "
+    "At the end, print the final answer in the format: print('Answer:', result)"
 )
 
 

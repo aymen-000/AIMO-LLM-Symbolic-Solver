@@ -12,9 +12,10 @@ import json
 import hashlib
 import os
 import re
-import random
 from tqdm import tqdm
-
+import argparse
+import yaml
+import random
 RAW_DIR = "./data/raw"
 OUT_DIR = "./data/processed"
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -123,6 +124,14 @@ def process_records(records: list[dict], source: str) -> list[dict]:
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True, help="Path to config YAML file")
+    args = parser.parse_args()
+
+    # Load config
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+
     all_records = []
 
     for fname in ["numina.jsonl", "math.jsonl", "aime.jsonl"]:
@@ -138,11 +147,12 @@ if __name__ == "__main__":
     all_records = deduplicate(all_records)
     print(f"Total after dedup:  {len(all_records):,}")
 
-    # Cap at 300K for single-GPU training
-    if len(all_records) > 300_000:
+    max_samples = config["data"].get("max_samples", 300_000)
+
+    if len(all_records) > max_samples:
         random.shuffle(all_records)
-        all_records = all_records[:300_000]
-        print(f"Capped at 300,000 samples")
+        all_records = all_records[:max_samples]
+        print(f"Capped at {max_samples:,} samples")
 
     # Format into chat template
     formatted = [
@@ -154,6 +164,10 @@ if __name__ == "__main__":
     split = int(len(formatted) * 0.95)
     train, eval_ = formatted[:split], formatted[split:]
 
-    save_jsonl(train, f"{OUT_DIR}/sft_train.jsonl")
-    save_jsonl(eval_,  f"{OUT_DIR}/sft_eval.jsonl")
+    train_path = config["data"]["train_path"]
+    eval_path = config["data"]["eval_path"]
+
+    save_jsonl(train, train_path)
+    save_jsonl(eval_, eval_path)
+
     print("\nData preparation complete.")

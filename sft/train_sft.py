@@ -18,7 +18,7 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model, TaskType
 from trl import SFTTrainer
-
+import argparse
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 # Try to import VRAM utilities, but provide stubs if not available
@@ -39,7 +39,7 @@ except ImportError:
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-def load_config(path: str = "configs/sft_config.yaml") -> dict:
+def load_config(path) -> dict:
     with open(path) as f:
         return yaml.safe_load(f)
 
@@ -112,7 +112,10 @@ def load_model_and_tokenizer(cfg: dict):
 # ── Training ──────────────────────────────────────────────────────────────────
 
 def main():
-    cfg = load_config()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True, help="Path to config YAML file")
+    args = parser.parse_args()
+    cfg = load_config(path=args.config)
     train_cfg = cfg["training"]
 
     wandb.init(project="aimo-sft", config=cfg)

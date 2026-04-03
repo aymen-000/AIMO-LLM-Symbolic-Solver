@@ -62,7 +62,7 @@ def main():
     # =========================
     # Load base model
     # =========================
-    with VRAMGuard("loading base model"):
+    with VRAMGuard("loading LoraConfigbase model"):
         base_model = AutoModelForCausalLM.from_pretrained(
             BASE_MODEL,
             torch_dtype=TORCH_DTYPE,

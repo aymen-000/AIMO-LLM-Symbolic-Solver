@@ -70,9 +70,10 @@ def make_reward_fn():
     Signature expected by TRL: fn(prompts, completions, **kwargs) -> list[float]
     """
     def reward_fn(prompts, completions, ground_truth=None, **kwargs):
+        # ground_truth must be a list of correct answers for each prompt
         rewards = []
         for completion, gt in zip(completions, ground_truth):
-            r = batch_rewards([completion], gt)[0]
+            r = batch_rewards([completion], gt)[0]  # single completion per prompt
             rewards.append(r)
         return rewards
 

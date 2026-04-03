@@ -18,7 +18,7 @@ grpo:
 training:
   output_dir: "./outputs/grpo"
   max_steps: 1500
-  per_device_train_batch_size: 1            # 1 problem × G rollouts per step
+  per_device_train_batch_size: 1            
   gradient_accumulation_steps: 4
   learning_rate: 1.0e-6
   lr_scheduler_type: "constant_with_warmup"
@@ -27,8 +27,8 @@ training:
   bf16: true
   gradient_checkpointing: true
   logging_steps: 5
-  save_steps: 100
-  save_total_limit: 5
+  save_steps: 1500
+  save_total_limit: 3
   report_to: "wandb"
 
 data:

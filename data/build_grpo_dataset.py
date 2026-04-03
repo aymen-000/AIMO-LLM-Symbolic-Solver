@@ -11,6 +11,7 @@ Strategy:
 
 import json
 import os
+os.environ["VLLM_ATTENTION_BACKEND"] = "xformers"
 import torch
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -31,10 +32,7 @@ TEMPERATURE    = 0.8
 SYSTEM_PROMPT = (
     "You are an expert math olympiad solver. "
     "Think step by step. "
-    "Always express your solution as executable Python code. "
-    "The code should compute the final answer directly. "
-    "Do not include explanations outside the code. "
-    "At the end, print the final answer in the format: print('Answer:', result)"
+    "At the end, state your final answer as a single integer on a new line prefixed with 'Answer:'."
 )
 
 
@@ -116,7 +114,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
     llm = LLM(
         model=MODEL_PATH,
-        dtype="bfloat16",
+        dtype="float16",
         gpu_memory_utilization=0.85,
         max_model_len=2048,
     )

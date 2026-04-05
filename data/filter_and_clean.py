@@ -20,13 +20,11 @@ RAW_DIR = "./data/raw"
 OUT_DIR = "./data/processed"
 os.makedirs(OUT_DIR, exist_ok=True)
 
+
 SYSTEM_PROMPT = (
     "You are an expert math olympiad solver. "
     "Think step by step. "
-    "Always express your solution as executable Python code. "
-    "The code should compute the final answer directly. "
-    "Do not include explanations outside the code. "
-    "At the end, print the final answer in the format: print('Answer:', result)"
+    "At the end, state your final answer as a single integer on a new line prefixed with 'Answer:'."
 )
 
 
